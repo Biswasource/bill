@@ -666,15 +666,15 @@ export default function QuotationPage() {
       
       <div class="terms-conditions">
         <h3>Terms and Conditions</h3>
-        <p style="white-space: pre-line;">${
+        <p style="white-space: pre-line; width: 70%;">${
           settings.terms_and_conditions || ""
         }</p>
         
         <div class="signature-box">
           ${
             settings.signature_image
-              ? `<img src="${settings.signature_image}" alt="Signature">`
-              : '<div style="height: 50px;"></div>'
+              ? `<img src="${settings.signature_image}" alt="Signature" style="margin-left: 40px; margin-top: 20px;"/>`
+              : '<div style="height: 50px; margin-left: 1000px;"></div>'
           }
           <div class="signature-line">Authorised Signatory For<br>${
             settings.company_name
