@@ -1084,8 +1084,9 @@ export default function QuotationPage() {
                     ) : (
                       services.map((service) => (
                         <SelectItem key={service.id} value={service.id}>
-                          {service.name} — ₹
-                          {service.price.toLocaleString("en-IN")}
+                          {service.name.split(" ").slice(0, 5).join(" ") +
+                            "...."}
+                          — ₹{service.price.toLocaleString("en-IN")}
                         </SelectItem>
                       ))
                     )}
