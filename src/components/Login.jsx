@@ -17,7 +17,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { XCircle } from "lucide-react";
 import { supabase } from "../supabase/supabase";
 import { Link, useNavigate } from "react-router";
-import { useNavigate } from "react-router";
 
 export default function Login() {
   const [formData, setFormData] = useState({
