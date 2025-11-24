@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { supabase } from "../supabase/supabase";
+import { Link } from "react-router";
 
 // UUID generation function
 function generateUUID() {
@@ -272,12 +273,12 @@ export default function Signup() {
           <CardFooter className="flex justify-center">
             <p className="text-sm text-gray-600">
               Already have an account?{" "}
-              <a
-                href="/login"
+              <Link
+                to="/login"
                 className="text-blue-600 hover:underline font-medium"
               >
                 Login here
-              </a>
+              </Link>
             </p>
           </CardFooter>
         </Card>

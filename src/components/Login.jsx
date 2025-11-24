@@ -16,6 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { XCircle } from "lucide-react";
 import { supabase } from "../supabase/supabase";
+import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -30,6 +32,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const navigate = useNavigate();
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -107,7 +110,8 @@ export default function Login() {
         localStorage.setItem("supabase_user", JSON.stringify(authData.user));
 
         // Redirect to dashboard
-        window.location.href = "/dashboard/dashboard";
+        // window.location.href = "/dashboard/dashboard";
+        navigate("/dashboard/dashboard");
       }
     } catch (err) {
       setError(
@@ -185,12 +189,12 @@ export default function Login() {
           <CardFooter className="flex justify-center">
             <p className="text-sm text-gray-600">
               Don't have an account?{" "}
-              <a
-                href="/signup"
+              <Link
+                to="/signup"
                 className="text-blue-600 hover:underline font-medium"
               >
                 Sign up here
-              </a>
+              </Link>
             </p>
           </CardFooter>
         </Card>
