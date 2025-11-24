@@ -902,59 +902,6 @@ export default function QuotationPage() {
           <div className="space-y-6">
             <Card className="shadow-lg">
               <CardHeader>
-                <CardTitle>Company Information</CardTitle>
-                <CardDescription>
-                  Your company details from settings
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {settings ? (
-                  <div className="space-y-4">
-                    {settings.logo_image && (
-                      <div className="text-center">
-                        <img
-                          src={settings.logo_image}
-                          alt="Company Logo"
-                          className="w-32 h-32 object-contain mx-auto border rounded-lg p-2 bg-white"
-                        />
-                      </div>
-                    )}
-                    <div className="space-y-2 text-sm">
-                      <p>
-                        <strong className="text-slate-700">Company:</strong>{" "}
-                        {settings.company_name}
-                      </p>
-                      {settings.company_email && (
-                        <p>
-                          <strong className="text-slate-700">Email:</strong>{" "}
-                          {settings.company_email}
-                        </p>
-                      )}
-                      {settings.company_phone && (
-                        <p>
-                          <strong className="text-slate-700">Phone:</strong>{" "}
-                          {settings.company_phone}
-                        </p>
-                      )}
-                      {settings.company_address && (
-                        <p>
-                          <strong className="text-slate-700">Address:</strong>{" "}
-                          {settings.company_address}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-sm text-slate-500 text-center py-8">
-                    No settings configured. Please set up your company
-                    information.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-lg">
-              <CardHeader>
                 <CardTitle>Quotation Details</CardTitle>
                 <CardDescription>Enter quotation information</CardDescription>
               </CardHeader>
