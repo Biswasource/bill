@@ -17,6 +17,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
+  SelectSeparator,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import html2pdf from "html2pdf.js";
@@ -1062,68 +1065,33 @@ export default function QuotationPage() {
               <CardHeader>
                 <CardTitle>Select Services</CardTitle>
                 <CardDescription>
-                  Choose services to include in the quotation
+                  Choose services for this quotation
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {services.length === 0 ? (
-                    <p className="text-sm text-slate-500 text-center py-4">
-                      No services available
-                    </p>
-                  ) : (
-                    services.map((service) => (
-                      <div
-                        key={service.id}
-                        className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-slate-50 transition"
-                      >
-                        <Checkbox
-                          id={service.id}
-                          checked={selectedServices.includes(service.id)}
-                          onCheckedChange={() =>
-                            handleServiceToggle(service.id)
-                          }
-                        />
-                        <label
-                          htmlFor={service.id}
-                          className="flex-1 cursor-pointer"
-                        >
-                          <p className="font-medium text-sm">{service.name}</p>
-                        </label>
-                        <p className="text-sm font-semibold text-blue-600">
-                          ₹{service.price.toLocaleString("en-IN")}
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+              <Select onValueChange={(value) => handleServiceToggle(value)}>
+                <SelectTrigger className="ml-5 px-4">
+                  <SelectValue placeholder="Select Services" />
+                </SelectTrigger>
 
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle>Total Amount</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg space-y-2 border border-blue-200">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-700">Subtotal:</span>
-                    <span className="font-semibold">
-                      ₹{total.toLocaleString("en-IN")}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm pb-2 border-b border-blue-200">
-                    <span className="text-slate-700">Tax (0%):</span>
-                    <span className="font-semibold">₹0</span>
-                  </div>
-                  <div className="flex justify-between text-lg pt-2">
-                    <span className="font-bold text-slate-800">Total:</span>
-                    <span className="font-bold text-blue-600">
-                      ₹{total.toLocaleString("en-IN")}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Available Services</SelectLabel>
+
+                    {services.length === 0 ? (
+                      <SelectItem value="none" disabled>
+                        No services available
+                      </SelectItem>
+                    ) : (
+                      services.map((service) => (
+                        <SelectItem key={service.id} value={service.id}>
+                          {service.name} — ₹
+                          {service.price.toLocaleString("en-IN")}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </Card>
 
             <Button
