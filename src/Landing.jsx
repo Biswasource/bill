@@ -164,16 +164,6 @@ const QuotationGeneratorLanding = () => {
               className="bg-black text-white px-8 py-3 rounded-full flex items-center gap-3 hover:bg-gray-800 transition shadow-xl text-lg font-medium"
               style={{ fontWeight: 500 }}
             >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="opacity-90"
-              >
-                <path d="M4 2h16a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" />
-                <rect x="7" y="7" width="10" height="10" fill="white" />
-              </svg>
               Get Started Free
             </button>
           </Link>
