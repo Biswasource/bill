@@ -188,6 +188,7 @@ export default function QuotationPage() {
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
       .toISOString()
       .split("T")[0],
+    note: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -615,6 +616,15 @@ export default function QuotationPage() {
             "en-IN"
           )}</strong></td>
         </tr>
+        ${
+          billDetails.note
+            ? `<div style="border: 2px solid #000; border-top:none; padding: 8px; margin-bottom: 10px; font-size:10px;">
+       <strong>Projects Details :</strong>
+       <p>${billDetails.note}</p>
+     </div>`
+            : ""
+        }
+
       </tbody>
     </table>
     
@@ -714,6 +724,7 @@ export default function QuotationPage() {
         account_number: settings.account_number || "",
         bank_branch: settings.bank_branch || "",
         terms_and_conditions: settings.terms_and_conditions || "",
+        note: billDetails.note || "", // <-- ADDED HERE
 
         status: "draft",
       });
@@ -1007,6 +1018,20 @@ export default function QuotationPage() {
                 )}
               </CardContent>
             </Card>
+
+            <div className="space-y-2">
+              <Label htmlFor="note">Project Details (Optional)</Label>
+              <textarea
+                id="note"
+                className="w-full rounded-md border border-slate-300 p-2 text-sm"
+                rows="3"
+                placeholder="Write any additional note for the client..."
+                value={billDetails.note}
+                onChange={(e) =>
+                  setBillDetails({ ...billDetails, note: e.target.value })
+                }
+              />
+            </div>
 
             <Card className="shadow-lg">
               <CardHeader>
