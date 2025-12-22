@@ -515,27 +515,36 @@ export default function QuotationPage() {
     }
     
     .terms-conditions {
-      position: relative;
+      display: flex; 
+      flex-direction: column; 
+      justify-content: space-between;
+    }
+
+    .terms-content {
+      flex: 1;
     }
     
     .signature-box {
-      position: absolute;
-      right: 10px;
-      bottom: 15px;
-      text-align: center;
-      font-size: 9px;
+      align-self: flex-end; 
+      text-align: center; 
+      font-size: 9px; 
+      min-width: 150px; 
+      margin-top: 20px;
     }
     
     .signature-box img {
-      max-width: 100px;
-      max-height: 50px;
-      margin-bottom: 5px;
+      max-width: 120px; 
+      max-height: 60px; 
+      margin-bottom: 5px; 
+      display: block; 
+      margin-left: auto; 
+      margin-right: auto;
     }
     
     .signature-line {
       border-top: 1px solid #000;
       padding-top: 5px;
-      margin-top: 8px;
+      margin-top: 5px;
       font-weight: bold;
     }
     
@@ -675,16 +684,18 @@ export default function QuotationPage() {
       </div>
       
       <div class="terms-conditions">
-        <h3>Terms and Conditions</h3>
-        <p style="white-space: pre-line; width: 70%;">${
-          settings.terms_and_conditions || ""
-        }</p>
+        <div class="terms-content">
+          <h3>Terms and Conditions</h3>
+          <p style="white-space: pre-line;">${
+            settings.terms_and_conditions || ""
+          }</p>
+        </div>
         
         <div class="signature-box">
           ${
             settings.signature_image
-              ? `<img src="${settings.signature_image}" alt="Signature" style="margin-left: 40px; margin-top: 20px;"/>`
-              : '<div style="height: 50px; margin-left: 1000px;"></div>'
+              ? `<img src="${settings.signature_image}" alt="Signature"/>`
+              : '<div style="height: 50px;"></div>'
           }
           <div class="signature-line">Authorised Signatory For<br>${
             settings.company_name

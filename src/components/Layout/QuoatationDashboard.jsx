@@ -334,10 +334,11 @@ export default function QuotationsList() {
     .bank-details, .terms-conditions { flex: 1; border: 2px solid #000; padding: 10px; min-height: 200px; }
     .bank-details h3, .terms-conditions h3 { font-size: 11px; margin-bottom: 8px; text-decoration: underline; }
     .bank-details p, .terms-conditions p { margin: 4px 0; line-height: 1.5; }
-    .terms-conditions { position: relative; }
-    .signature-box { position: absolute; right: 10px; bottom: 15px; text-align: center; font-size: 9px; }
-    .signature-box img { max-width: 100px; max-height: 50px; margin-bottom: 5px; }
-    .signature-line { border-top: 1px solid #000; padding-top: 5px; margin-top: 8px; font-weight: bold; }
+    .terms-conditions { display: flex; flex-direction: column; justify-content: space-between; }
+    .terms-content { flex: 1; }
+    .signature-box { align-self: flex-end; text-align: center; font-size: 9px; min-width: 150px; margin-top: 20px; }
+    .signature-box img { max-width: 120px; max-height: 60px; margin-bottom: 5px; display: block; margin-left: auto; margin-right: auto; }
+    .signature-line { border-top: 1px solid #000; padding-top: 5px; margin-top: 5px; font-weight: bold; }
     @media print { body { margin: 0; padding: 0; } .page { margin: 0; page-break-after: always; } }
   </style>
 </head>
@@ -443,8 +444,10 @@ export default function QuotationsList() {
         <p><strong>Bank:</strong> ${form.bank_branch || ""}</p>
       </div>
       <div class="terms-conditions">
-        <h3>Terms and Conditions</h3>
-        <p style="white-space: pre-line;">${form.terms_and_conditions || ""}</p>
+        <div class="terms-content">
+          <h3>Terms and Conditions</h3>
+          <p style="white-space: pre-line;">${form.terms_and_conditions || ""}</p>
+        </div>
         <div class="signature-box">
           ${
             signatureImage
@@ -595,6 +598,7 @@ export default function QuotationsList() {
         imgWidth * ratio,
         imgHeight * ratio
       );
+
       pdf.save(`Quotation_${quotation.quote_number}.pdf`);
 
       // Clean up
