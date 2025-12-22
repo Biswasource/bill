@@ -503,16 +503,110 @@ export default function QuotationsList() {
     }
   };
 
-  const handleDownload = (quotation) => {
-    const blob = new Blob([quotation.html_content], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Quotation_${quotation.quote_number}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const handleDownload = async (quotation) => {
+    try {
+      setLoading(true);
+      
+      // Create a temporary element to render the HTML
+      const element = document.createElement("div");
+      element.innerHTML = quotation.html_content;
+      element.style.position = "absolute";
+      element.style.left = "-9999px";
+      element.style.top = "0";
+      element.style.width = "210mm";
+      element.style.background = "#ffffff";
+      document.body.appendChild(element);
+
+      // Wait for images to load
+      const images = element.querySelectorAll("img");
+      await Promise.all(
+        Array.from(images).map((img) => {
+          return new Promise((resolve) => {
+            if (img.complete) {
+              resolve();
+            } else {
+              img.onload = resolve;
+              img.onerror = resolve;
+              setTimeout(resolve, 2000); // Fallback timeout
+            }
+          });
+        })
+      );
+
+      // Load libraries dynamically if not already loaded
+      const loadScript = (src) => {
+        return new Promise((resolve, reject) => {
+          if (document.querySelector(`script[src="${src}"]`)) {
+            resolve();
+            return;
+          }
+          const script = document.createElement("script");
+          script.src = src;
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      };
+
+      // Load html2canvas and jsPDF
+      if (!window.html2canvas) {
+        await loadScript(
+          "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+        );
+      }
+      if (!window.jspdf) {
+        await loadScript(
+          "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+        );
+      }
+
+      // Convert HTML to canvas
+      const canvas = await window.html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+        windowWidth: 794, // A4 width in pixels at 96 DPI
+        windowHeight: 1123, // A4 height in pixels at 96 DPI
+      });
+
+      // Create PDF
+      const imgData = canvas.toDataURL("image/jpeg", 0.98);
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 5;
+
+      pdf.addImage(
+        imgData,
+        "JPEG",
+        imgX,
+        imgY,
+        imgWidth * ratio,
+        imgHeight * ratio
+      );
+      pdf.save(`Quotation_${quotation.quote_number}.pdf`);
+
+      // Clean up
+      document.body.removeChild(element);
+      setSuccess("PDF downloaded successfully!");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      setError(`Failed to download PDF: ${err.message}`);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getStatusBadge = (status) => {

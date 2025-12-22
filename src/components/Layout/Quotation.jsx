@@ -1037,34 +1037,87 @@ export default function QuotationPage() {
               <CardHeader>
                 <CardTitle>Select Services</CardTitle>
                 <CardDescription>
-                  Choose services for this quotation
+                  Choose one or more services for this quotation
                 </CardDescription>
               </CardHeader>
-              <Select onValueChange={(value) => handleServiceToggle(value)}>
-                <SelectTrigger className="ml-5 px-4">
-                  <SelectValue placeholder="Select Services" />
-                </SelectTrigger>
+              <CardContent className="space-y-4">
+                {services.length === 0 ? (
+                  <p className="text-sm text-slate-500 text-center py-4">
+                    No services available. Please add services first.
+                  </p>
+                ) : (
+                  <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
+                    {services.map((service) => (
+                      <div
+                        key={service.id}
+                        className="flex items-start space-x-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer"
+                        onClick={() => handleServiceToggle(service.id)}
+                      >
+                        <Checkbox
+                          id={`service-${service.id}`}
+                          checked={selectedServices.includes(service.id)}
+                          onCheckedChange={() => handleServiceToggle(service.id)}
+                          className="mt-1"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <label
+                            htmlFor={`service-${service.id}`}
+                            className="text-sm font-medium text-slate-900 cursor-pointer block"
+                          >
+                            {service.name}
+                          </label>
+                          <p className="text-sm font-semibold text-blue-600 mt-1">
+                            ₹{service.price.toLocaleString("en-IN")}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Available Services</SelectLabel>
-
-                    {services.length === 0 ? (
-                      <SelectItem value="none" disabled>
-                        No services available
-                      </SelectItem>
-                    ) : (
-                      services.map((service) => (
-                        <SelectItem key={service.id} value={service.id}>
-                          {service.name.split(" ").slice(0, 5).join(" ") +
-                            "...."}
-                          — ₹{service.price.toLocaleString("en-IN")}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+                {selectedServices.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-slate-200">
+                    <h4 className="text-sm font-semibold text-slate-900 mb-3">
+                      Selected Services ({selectedServices.length})
+                    </h4>
+                    <div className="space-y-2">
+                      {selectedServices.map((id) => {
+                        const service = services.find((s) => s.id === id);
+                        if (!service) return null;
+                        return (
+                          <div
+                            key={id}
+                            className="flex items-center justify-between p-2 bg-blue-50 rounded-md border border-blue-200">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-900 truncate">
+                                {service.name}
+                              </p>
+                              <p className="text-xs text-slate-600">
+                                ₹{service.price.toLocaleString("en-IN")}
+                              </p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleServiceToggle(id)}
+                              className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600">
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between">
+                      <span className="text-sm font-semibold text-slate-900">
+                        Total Amount:
+                      </span>
+                      <span className="text-lg font-bold text-blue-600">
+                        ₹{total.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
             </Card>
 
             <Button
