@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Download, CheckCircle, LogOut, X } from "lucide-react";
+import { Download, CheckCircle, LogOut, X, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,6 +25,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import html2pdf from "html2pdf.js";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import signSideImg from "../../assets/image.png";
+import { imageToBase64 } from "../../utils/imageToBase64";
 
 const SUPABASE_URL = "https://bwpbffyiggkomneomtch.supabase.co";
 const SUPABASE_KEY =
@@ -195,6 +197,7 @@ export default function QuotationPage() {
   const [success, setSuccess] = useState("");
   const [user, setUser] = useState(null);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [localStampImage, setLocalStampImage] = useState("");
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -285,6 +288,17 @@ export default function QuotationPage() {
     billDetails.invoiceNo
   }_${selectedClient?.name.replace(/\s+/g, "_")}.html`;
 
+  const handleLocalStampUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setLocalStampImage(event.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // selectedClient.name;
   const generateQuotation = async () => {
     if (!settings) {
@@ -313,6 +327,15 @@ export default function QuotationPage() {
     }
 
     const totalInWords = numberToWords(Math.floor(total));
+    
+    // Convert the side signature image/stamp to base64
+    let signSideImgBase64 = "";
+    try {
+      const stampSource = localStampImage || settings.stamp_image || signSideImg;
+      signSideImgBase64 = await imageToBase64(stampSource);
+    } catch (error) {
+      console.error("Error converting image to base64:", error);
+    }
 
     const htmlContent = `<!DOCTYPE html>
 <html>
@@ -691,15 +714,18 @@ export default function QuotationPage() {
           }</p>
         </div>
         
-        <div class="signature-box">
-          ${
-            settings.signature_image
-              ? `<img src="${settings.signature_image}" alt="Signature"/>`
-              : '<div style="height: 50px;"></div>'
-          }
-          <div class="signature-line">Authorised Signatory For<br>${
-            settings.company_name
-          }</div>
+        <div style="align-self: flex-end; display: flex; align-items: flex-end; gap: 20px; margin-top: 20px;">
+          ${signSideImgBase64 ? `<img src="${signSideImgBase64}" alt="" style="height: 80px; width: auto; object-fit: contain;" />` : ''}
+          <div class="signature-box" style="margin-top: 0; align-self: auto;">
+            ${
+              settings.signature_image
+                ? `<img src="${settings.signature_image}" alt="Signature"/>`
+                : '<div style="height: 50px;"></div>'
+            }
+            <div class="signature-line">Authorised Signatory For<br>${
+              settings.company_name
+            }</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1127,6 +1153,46 @@ export default function QuotationPage() {
                       </span>
                     </div>
                   </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle>Custom Stamp (Optional)</CardTitle>
+                <CardDescription>
+                  Upload a temporary stamp for this quotation
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {localStampImage ? (
+                  <div className="text-center">
+                    <img
+                      src={localStampImage}
+                      alt="Stamp Preview"
+                      className="w-full h-24 object-contain mb-4 border rounded-lg"
+                    />
+                    <Button
+                      onClick={() => setLocalStampImage("")}
+                      variant="destructive"
+                      size="sm"
+                    >
+                      Remove Stamp
+                    </Button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center cursor-pointer py-6 border-2 border-dashed border-slate-300 rounded-lg hover:border-slate-400 transition">
+                    <Upload className="h-8 w-8 text-slate-400 mb-2" />
+                    <p className="text-sm text-slate-600">
+                      Click to upload stamp
+                    </p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLocalStampUpload}
+                      className="hidden"
+                    />
+                  </label>
                 )}
               </CardContent>
             </Card>

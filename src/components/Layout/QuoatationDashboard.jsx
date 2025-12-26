@@ -34,6 +34,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import signSideImg from "../../assets/image.png";
+import { imageToBase64 } from "../../utils/imageToBase64";
 
 const SUPABASE_URL = "https://bwpbffyiggkomneomtch.supabase.co";
 const SUPABASE_KEY =
@@ -65,7 +67,7 @@ class SupabaseClient {
       ...options,
       headers,
     });
-
+    
     if (!response.ok) {
       const text = await response.text();
       throw new Error(text || "Request failed");
@@ -210,6 +212,7 @@ export default function QuotationsList() {
     bank_branch: "",
     terms_and_conditions: "",
   });
+  const [settings, setSettings] = useState(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -233,6 +236,23 @@ export default function QuotationsList() {
 
     checkAuth();
   }, []);
+
+  const fetchSettings = async (userId) => {
+    try {
+      const data = await supabase.select("settings", { user_id: userId });
+      if (data && data.length > 0) {
+        setSettings(data[0]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch settings:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchSettings(user.id);
+    }
+  }, [user]);
 
   const fetchQuotations = async (userId) => {
     try {
@@ -283,7 +303,7 @@ export default function QuotationsList() {
     setEditDialog(true);
   };
 
-  const regenerateHtmlContent = (form, originalHtml) => {
+  const regenerateHtmlContent = async (form, originalHtml) => {
     const totalInWords = numberToWords(Math.floor(form.total_amount));
 
     // Extract the logo and signature images from original HTML
@@ -294,6 +314,15 @@ export default function QuotationsList() {
 
     const logoImage = logoMatch ? logoMatch[1] : "";
     const signatureImage = signatureMatch ? signatureMatch[1] : "";
+    
+    // Convert the side signature image to base64
+    let signSideImgBase64 = "";
+    try {
+      const stampSource = settings?.stamp_image || signSideImg;
+      signSideImgBase64 = await imageToBase64(stampSource);
+    } catch (error) {
+      console.error("Error converting image to base64:", error);
+    }
 
     return `<!DOCTYPE html>
 <html>
@@ -448,15 +477,18 @@ export default function QuotationsList() {
           <h3>Terms and Conditions</h3>
           <p style="white-space: pre-line;">${form.terms_and_conditions || ""}</p>
         </div>
-        <div class="signature-box">
-          ${
-            signatureImage
-              ? `<img src="${signatureImage}" alt="Signature">`
-              : '<div style="height: 50px;"></div>'
-          }
-          <div class="signature-line">Authorised Signatory For<br>${
-            form.company_name
-          }</div>
+        <div style="align-self: flex-end; display: flex; align-items: flex-end; gap: 20px; margin-top: 20px;">
+          ${signSideImgBase64 ? `<img src="${signSideImgBase64}" alt="" style="height: 80px; width: auto; object-fit: contain;" />` : ''}
+          <div class="signature-box" style="margin-top: 0; align-self: auto;">
+            ${
+              signatureImage
+                ? `<img src="${signatureImage}" alt="Signature">`
+                : '<div style="height: 50px;"></div>'
+            }
+            <div class="signature-line">Authorised Signatory For<br>${
+              form.company_name
+            }</div>
+          </div>
         </div>
       </div>
     </div>
@@ -469,7 +501,7 @@ export default function QuotationsList() {
     try {
       setLoading(true);
 
-      const updatedHtmlContent = regenerateHtmlContent(
+      const updatedHtmlContent = await regenerateHtmlContent(
         editForm,
         selectedQuotation.html_content
       );

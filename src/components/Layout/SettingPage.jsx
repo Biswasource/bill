@@ -122,6 +122,7 @@ export default function SettingsPage() {
     termsAndConditions: "",
     logoImage: "",
     signatureImage: "",
+    stampImage: "",
   });
   const [settingsId, setSettingsId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -173,6 +174,7 @@ export default function SettingsPage() {
           termsAndConditions: userSettings.terms_and_conditions || "",
           logoImage: userSettings.logo_image || "",
           signatureImage: userSettings.signature_image || "",
+          stampImage: userSettings.stamp_image || "",
         });
       }
     } catch (err) {
@@ -204,6 +206,17 @@ export default function SettingsPage() {
     }
   };
 
+  const handleStampUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setSettings({ ...settings, stampImage: event.target.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const saveSettings = async () => {
     if (!settings.companyName || !settings.companyEmail) {
       setError("Please fill in company name and email");
@@ -226,6 +239,7 @@ export default function SettingsPage() {
         terms_and_conditions: settings.termsAndConditions,
         logo_image: settings.logoImage,
         signature_image: settings.signatureImage,
+        stamp_image: settings.stampImage,
         user_id: user.id,
       };
 
@@ -397,6 +411,49 @@ export default function SettingsPage() {
                       type="file"
                       accept="image/*"
                       onChange={handleSignatureUpload}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Stamp Image</CardTitle>
+                <CardDescription>
+                  Upload company stamp/seal for quotations
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {settings.stampImage ? (
+                  <div className="text-center">
+                    <img
+                      src={settings.stampImage}
+                      alt="Stamp Preview"
+                      className="w-full h-24 object-contain mb-4 border rounded-lg"
+                    />
+                    <Button
+                      onClick={() =>
+                        setSettings({ ...settings, stampImage: "" })
+                      }
+                      variant="destructive"
+                      size="sm"
+                    >
+                      Remove Stamp
+                    </Button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center cursor-pointer py-6 border-2 border-dashed border-slate-300 rounded-lg hover:border-slate-400 transition">
+                    <Upload className="h-8 w-8 text-slate-400 mb-2" />
+                    <p className="text-sm text-slate-600">
+                      Click to upload stamp
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">(PNG, JPG)</p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleStampUpload}
                       className="hidden"
                     />
                   </label>
