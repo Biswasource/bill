@@ -190,6 +190,7 @@ export default function QuotationPage() {
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
       .toISOString()
       .split("T")[0],
+    gstRate: "18",
     note: "",
   });
   const [loading, setLoading] = useState(false);
@@ -310,7 +311,7 @@ export default function QuotationPage() {
       setError("Please select a client");
       return;
     }
-
+    
     if (selectedServices.length === 0) {
       setError("Please select at least one service");
       return;
@@ -326,7 +327,16 @@ export default function QuotationPage() {
       return;
     }
 
-    const totalInWords = numberToWords(Math.floor(total));
+    const gstRate = parseFloat(billDetails.gstRate) || 0;
+    const cgstRate = gstRate / 2;
+    const sgstRate = gstRate / 2;
+
+    const cgstAmount = Math.round((total * cgstRate) / 100);
+    const sgstAmount = Math.round((total * sgstRate) / 100);
+    const totalTax = cgstAmount + sgstAmount;
+    const grandTotal = total + totalTax;
+
+    const totalInWords = numberToWords(Math.floor(grandTotal));
     
     // Convert the side signature image/stamp to base64
     let signSideImgBase64 = "";
@@ -673,11 +683,11 @@ export default function QuotationPage() {
       <div class="tax-row">
         <div class="tax-cell"></div>
         <div class="tax-cell">₹${total.toLocaleString("en-IN")}</div>
-        <div class="tax-cell">0%</div>
-        <div class="tax-cell">₹0</div>
-        <div class="tax-cell">0%</div>
-        <div class="tax-cell">₹0</div>
-        <div class="tax-cell">₹0</div>
+        <div class="tax-cell">${cgstRate}%</div>
+        <div class="tax-cell">₹${cgstAmount.toLocaleString("en-IN")}</div>
+        <div class="tax-cell">${sgstRate}%</div>
+        <div class="tax-cell">₹${sgstAmount.toLocaleString("en-IN")}</div>
+        <div class="tax-cell">₹${totalTax.toLocaleString("en-IN")}</div>
       </div>
       <div class="tax-row">
         <div class="tax-cell"><strong>Total</strong></div>
@@ -685,10 +695,10 @@ export default function QuotationPage() {
           "en-IN"
         )}</strong></div>
         <div class="tax-cell"></div>
-        <div class="tax-cell"><strong>₹0</strong></div>
+        <div class="tax-cell"><strong>₹${cgstAmount.toLocaleString("en-IN")}</strong></div>
         <div class="tax-cell"></div>
-        <div class="tax-cell"><strong>₹0</strong></div>
-        <div class="tax-cell"><strong>₹0</strong></div>
+        <div class="tax-cell"><strong>₹${sgstAmount.toLocaleString("en-IN")}</strong></div>
+        <div class="tax-cell"><strong>₹${grandTotal.toLocaleString("en-IN")}</strong></div>
       </div>
     </div>
     
@@ -747,7 +757,7 @@ export default function QuotationPage() {
         service_description: selectedServices
           .map((id) => services.find((s) => s.id === id)?.name)
           .join(", "),
-        total_amount: total,
+        total_amount: grandTotal,
         date: billDetails.date,
         expiry_date: billDetails.dueDate,
         html_content: htmlContent,
@@ -868,6 +878,8 @@ export default function QuotationPage() {
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
           .toISOString()
           .split("T")[0],
+        gstRate: "18",
+        note: "",
       });
     } catch (err) {
       setError(`Error: ${err.message}`);
@@ -880,6 +892,8 @@ export default function QuotationPage() {
   if (initialLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      
+
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-slate-700 font-medium">
@@ -902,6 +916,7 @@ export default function QuotationPage() {
               Create professional quotations with your company branding
             </p>
           </div>
+
           <div className="text-right flex items-center gap-4">
             <div>
               <p className="text-xs text-slate-500">Logged in as</p>
@@ -909,11 +924,14 @@ export default function QuotationPage() {
                 {user?.email}
               </p>
             </div>
+          
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
+            
           </div>
+
         </div>
 
         {error && (
@@ -994,6 +1012,22 @@ export default function QuotationPage() {
                       }
                     />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="gstRate">GST Rate (%)</Label>
+                  <Input
+                    id="gstRate"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={billDetails.gstRate}
+                    onChange={(e) =>
+                      setBillDetails({
+                        ...billDetails,
+                        gstRate: e.target.value,
+                      })
+                    }
+                  />
                 </div>
               </CardContent>
             </Card>
