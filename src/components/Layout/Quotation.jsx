@@ -468,7 +468,7 @@ export default function QuotationPage() {
       text-align: center;
     }
     
-    .service-col { text-align: left; }
+    .service-col { text-align: left; white-space: pre-wrap; }
     .amount-col { text-align: right; }
     
     .total-row td {
@@ -662,7 +662,7 @@ export default function QuotationPage() {
           billDetails.note
             ? `<div style="border: 2px solid #000; border-top:none; padding: 8px; margin-bottom: 10px; font-size:10px;">
        <strong>Projects Details :</strong>
-       <p>${billDetails.note}</p>
+       <p style="white-space: pre-wrap;">${billDetails.note}</p>
      </div>`
             : ""
         }
@@ -929,11 +929,8 @@ export default function QuotationPage() {
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
-            
           </div>
-
         </div>
-
         {error && (
           <Alert variant="destructive">
             <AlertDescription className="flex items-center justify-between">

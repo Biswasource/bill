@@ -10,6 +10,7 @@ import QuotationPage from "./components/Layout/Quotation";
 import SettingsPage from "./components/Layout/SettingPage";
 import QuotationsList from "./components/Layout/QuoatationDashboard";
 import Dashboard from "./components/Layout/Dashboard";
+import UserManagement from "./components/Layout/UserManagement";
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="quotation" element={<QuotationPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="quotations" element={<QuotationsList />} />
+          <Route path="users" element={<UserManagement />} />
         </Route>
       </Routes>
     </BrowserRouter>

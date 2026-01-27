@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Edit, Eye, Trash2, Download, X, CheckCircle } from "lucide-react";
+import { Edit, Eye, Trash2, Download, X, CheckCircle, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -211,8 +211,14 @@ export default function QuotationsList() {
     account_number: "",
     bank_branch: "",
     terms_and_conditions: "",
+    note: "",
   });
   const [settings, setSettings] = useState(null);
+  const [invoiceDialog, setInvoiceDialog] = useState(false);
+  const [invoiceData, setInvoiceData] = useState({
+    invoice_number: "",
+    date: new Date().toISOString().split("T")[0],
+  });
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -299,6 +305,7 @@ export default function QuotationsList() {
       account_number: quotation.account_number || "",
       bank_branch: quotation.bank_branch || "",
       terms_and_conditions: quotation.terms_and_conditions || "",
+      note: quotation.note || "",
     });
     setEditDialog(true);
   };
@@ -348,7 +355,7 @@ export default function QuotationsList() {
     thead { background-color: #000; color: white; }
     th { padding: 10px 8px; text-align: center; font-weight: bold; border: 1px solid #000; font-size: 10px; }
     td { padding: 10px 8px; border: 1px solid #000; text-align: center; }
-    .service-col { text-align: left; }
+    .service-col { text-align: left; white-space: pre-wrap; }
     .amount-col { text-align: right; }
     .total-row td { height: auto; padding: 8px; font-weight: bold; }
     .tax-section { border: 2px solid #000; border-top: none; margin-bottom: 10px; }
@@ -427,6 +434,14 @@ export default function QuotationsList() {
         </tr>
       </tbody>
     </table>
+    ${
+      form.note
+        ? `<div style="border: 2px solid #000; border-top:none; padding: 8px; margin-bottom: 10px; font-size:10px;">
+       <strong>Projects Details :</strong>
+       <p style="white-space: pre-wrap;">${form.note}</p>
+     </div>`
+        : ""
+    }
     <div class="tax-section">
       <div class="tax-row tax-header">
         <div class="tax-cell">HSN/SAC</div>
@@ -538,13 +553,13 @@ export default function QuotationsList() {
     }
   };
 
-  const handleDownload = async (quotation) => {
+  const downloadPdf = async (htmlContent, fileName) => {
     try {
       setLoading(true);
-      
+
       // Create a temporary element to render the HTML
       const element = document.createElement("div");
-      element.innerHTML = quotation.html_content;
+      element.innerHTML = htmlContent;
       element.style.position = "absolute";
       element.style.left = "-9999px";
       element.style.top = "0";
@@ -631,7 +646,7 @@ export default function QuotationsList() {
         imgHeight * ratio
       );
 
-      pdf.save(`Quotation_${quotation.quote_number}.pdf`);
+      pdf.save(fileName);
 
       // Clean up
       document.body.removeChild(element);
@@ -640,6 +655,249 @@ export default function QuotationsList() {
     } catch (err) {
       setError(`Failed to download PDF: ${err.message}`);
       console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownload = async (quotation) => {
+    await downloadPdf(quotation.html_content, `Quotation_${quotation.quote_number}.pdf`);
+  };
+
+  const generateInvoiceHtml = async (quotation, invoiceNo, invoiceDate) => {
+    const totalInWords = numberToWords(Math.floor(quotation.total_amount));
+    
+    // Use existing HTML to extract images if possible, or fallback to settings/defaults
+    // Ideally we reconstruct from data to be clean, but reusing structure is safer for consistency
+    // We will parse the existing HTML and replace specific strings
+    
+    // However, string replacement on raw HTML is risky.
+    // Better to reconstruct using the same template but with Invoice Labels.
+    
+    // Let's reuse regenerateHtmlContent logic but modified for Invoice
+    
+    // Extract images from original HTML
+    const originalHtml = quotation.html_content;
+    const logoMatch = originalHtml.match(/<img src="([^"]*)" alt="Logo">/);
+    const signatureMatch = originalHtml.match(/<img src="([^"]*)" alt="Signature">/);
+    const logoImage = logoMatch ? logoMatch[1] : "";
+    const signatureImage = signatureMatch ? signatureMatch[1] : "";
+
+     // Convert the side signature image to base64
+    let signSideImgBase64 = "";
+    try {
+      const stampSource = settings?.stamp_image || signSideImg;
+      signSideImgBase64 = await imageToBase64(stampSource);
+    } catch (error) {
+      console.error("Error converting image to base64:", error);
+    }
+
+    const form = {
+        ...quotation,
+        invoice_no: invoiceNo,
+        date: invoiceDate,
+    };
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice ${form.invoice_no}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: white; }
+    .page { width: 210mm; margin: 0 auto; padding: 10mm; background: white; }
+    .header-container { display: flex; justify-content: space-between; align-items: flex-start; border: 2px solid #000; padding: 10px; margin-bottom: 0; }
+    .logo-box { width: 80px; height: 80px; background: #000; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .logo-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .company-info { flex: 1; padding: 0 15px; font-size: 10px; line-height: 1.4; }
+    .company-info h1 { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
+    .company-info p { margin: 2px 0; }
+    .quotation-meta { text-align: right; font-size: 10px; line-height: 1.6; min-width: 150px; }
+    .quotation-meta strong { display: inline-block; width: 100px; text-align: left; }
+    .quotation-title-bar { background: #000; color: white; text-align: center; padding: 8px; font-size: 16px; font-weight: bold; letter-spacing: 2px; margin-bottom: 0; }
+    .bill-to-section { border: 2px solid #000; border-top: none; padding: 10px; margin-bottom: 10px; font-size: 10px; line-height: 1.5; }
+    .bill-to-section strong { display: block; margin-bottom: 4px; font-size: 11px; }
+    table { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 0; }
+    thead { background-color: #000; color: white; }
+    th { padding: 10px 8px; text-align: center; font-weight: bold; border: 1px solid #000; font-size: 10px; }
+    td { padding: 10px 8px; border: 1px solid #000; text-align: center; }
+    .service-col { text-align: left; }
+    .amount-col { text-align: right; }
+    .total-row td { height: auto; padding: 8px; font-weight: bold; }
+    .tax-section { border: 2px solid #000; border-top: none; margin-bottom: 10px; }
+    .tax-row { display: flex; border-bottom: 1px solid #000; font-size: 10px; }
+    .tax-row:last-child { border-bottom: none; }
+    .tax-cell { padding: 8px; border-right: 1px solid #000; text-align: center; flex: 1; }
+    .tax-cell:last-child { border-right: none; }
+    .tax-header { background: #000; color: white; font-weight: bold; }
+    .amount-in-words { border: 2px solid #000; border-top: none; padding: 8px; margin-bottom: 10px; font-size: 10px; }
+    .amount-in-words strong { display: block; margin-bottom: 4px; }
+    .bottom-section { display: flex; gap: 10px; font-size: 10px; }
+    .bank-details, .terms-conditions { flex: 1; border: 2px solid #000; padding: 10px; min-height: 200px; }
+    .bank-details h3, .terms-conditions h3 { font-size: 11px; margin-bottom: 8px; text-decoration: underline; }
+    .bank-details p, .terms-conditions p { margin: 4px 0; line-height: 1.5; }
+    .terms-conditions { display: flex; flex-direction: column; justify-content: space-between; }
+    .terms-content { flex: 1; }
+    .signature-box { align-self: flex-end; text-align: center; font-size: 9px; min-width: 150px; margin-top: 20px; }
+    .signature-box img { max-width: 120px; max-height: 60px; margin-bottom: 5px; display: block; margin-left: auto; margin-right: auto; }
+    .signature-line { border-top: 1px solid #000; padding-top: 5px; margin-top: 5px; font-weight: bold; }
+    @media print { body { margin: 0; padding: 0; } .page { margin: 0; page-break-after: always; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header-container">
+      <div class="logo-box">
+        <img src="${logoImage}" alt="Logo">
+      </div>
+      <div class="company-info">
+        <h1>${form.company_name}</h1>
+        <p>${form.company_address || ""}</p>
+        <p>Mobile: ${form.company_phone || ""}</p>
+        <p>Email: ${form.company_email}</p>
+        <p>Website: ${form.company_website || ""}</p>
+      </div>
+      <div class="quotation-meta">
+        <p><strong>Invoice No.</strong> ${form.invoice_no}</p>
+        <p><strong>Invoice Date</strong> ${form.date}</p>
+        <p><strong>Expiry Date</strong> ${form.expiry_date}</p>
+      </div>
+    </div>
+    <div class="quotation-title-bar">INVOICE</div>
+    <div class="bill-to-section">
+      <strong>BILL TO</strong>
+      <p>${form.client_name}</p>
+      <p>Mobile: ${form.client_phone}</p>
+      <p>Email: ${form.client_email}</p>
+      ${form.client_address ? `<p>Address: ${form.client_address}</p>` : ""}
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 8%;">S.NO.</th>
+          <th style="width: 52%;">SERVICES</th>
+          <th style="width: 10%;">QTY</th>
+          <th style="width: 15%;">RATE</th>
+          <th style="width: 15%;">AMOUNT</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td class="service-col">${form.service_description}</td>
+          <td>1 PCS</td>
+          <td>₹${form.total_amount.toLocaleString("en-IN")}</td>
+          <td class="amount-col">₹${form.total_amount.toLocaleString(
+            "en-IN"
+          )}</td>
+        </tr>
+        <tr class="total-row">
+          <td colspan="3"></td>
+          <td><strong>TOTAL</strong></td>
+          <td class="amount-col"><strong>₹${form.total_amount.toLocaleString(
+            "en-IN"
+          )}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+    ${
+      form.note
+        ? `<div style="border: 2px solid #000; border-top:none; padding: 8px; margin-bottom: 10px; font-size:10px;">
+       <strong>Projects Details :</strong>
+       <p style="white-space: pre-wrap;">${form.note}</p>
+     </div>`
+        : ""
+    }
+    <div class="tax-section">
+      <div class="tax-row tax-header">
+        <div class="tax-cell">HSN/SAC</div>
+        <div class="tax-cell">Taxable Value</div>
+        <div class="tax-cell">CGST Rate</div>
+        <div class="tax-cell">CGST Amount</div>
+        <div class="tax-cell">SGST Rate</div>
+        <div class="tax-cell">SGST Amount</div>
+        <div class="tax-cell">Total Tax Amount</div>
+      </div>
+      <div class="tax-row">
+        <div class="tax-cell"></div>
+        <div class="tax-cell">₹${form.total_amount.toLocaleString(
+          "en-IN"
+        )}</div>
+        <div class="tax-cell">0%</div>
+        <div class="tax-cell">₹0</div>
+        <div class="tax-cell">0%</div>
+        <div class="tax-cell">₹0</div>
+        <div class="tax-cell">₹0</div>
+      </div>
+      <div class="tax-row">
+        <div class="tax-cell"><strong>Total</strong></div>
+        <div class="tax-cell"><strong>₹${form.total_amount.toLocaleString(
+          "en-IN"
+        )}</strong></div>
+        <div class="tax-cell"></div>
+        <div class="tax-cell"><strong>₹0</strong></div>
+        <div class="tax-cell"></div>
+        <div class="tax-cell"><strong>₹0</strong></div>
+        <div class="tax-cell"><strong>₹0</strong></div>
+      </div>
+    </div>
+    <div class="amount-in-words">
+      <strong>Total Amount (in words)</strong>
+      <p>${totalInWords}</p>
+    </div>
+    <div class="bottom-section">
+      <div class="bank-details">
+        <h3>Bank Details</h3>
+        <p><strong>Name:</strong> ${form.bank_name || ""}</p>
+        <p><strong>IFSC Code:</strong> ${form.ifsc_code || ""}</p>
+        <p><strong>Account No:</strong> ${form.account_number || ""}</p>
+        <p><strong>Bank:</strong> ${form.bank_branch || ""}</p>
+      </div>
+      <div class="terms-conditions">
+        <div class="terms-content">
+          <h3>Terms and Conditions</h3>
+          <p style="white-space: pre-line;">${form.terms_and_conditions || ""}</p>
+        </div>
+        <div style="align-self: flex-end; display: flex; align-items: flex-end; gap: 20px; margin-top: 20px;">
+           ${signSideImgBase64 ? `<img src="${signSideImgBase64}" alt="" style="height: 80px; width: auto; object-fit: contain;" />` : ''}
+          <div class="signature-box" style="margin-top: 0; align-self: auto;">
+            ${
+              signatureImage
+                ? `<img src="${signatureImage}" alt="Signature">`
+                : '<div style="height: 50px;"></div>'
+            }
+            <div class="signature-line">Authorised Signatory For<br>${
+              form.company_name
+            }</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+  };
+
+  const handleConvertToInvoice = (quotation) => {
+    setSelectedQuotation(quotation);
+    setInvoiceData({
+      invoice_number: `INV-${quotation.quote_number}`,
+      date: new Date().toISOString().split("T")[0],
+    });
+    setInvoiceDialog(true);
+  };
+
+  const handleGenerateInvoice = async () => {
+    if (!selectedQuotation) return;
+    setLoading(true);
+    try {
+      const invoiceHtml = await generateInvoiceHtml(selectedQuotation, invoiceData.invoice_number, invoiceData.date);
+      await downloadPdf(invoiceHtml, `Invoice_${invoiceData.invoice_number}.pdf`);
+      setInvoiceDialog(false);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to generate invoice");
     } finally {
       setLoading(false);
     }
@@ -814,6 +1072,14 @@ export default function QuotationsList() {
                                 onClick={() => handleDownload(quotation)}
                               >
                                 <Download className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleConvertToInvoice(quotation)}
+                                title="Convert to Invoice"
+                              >
+                                <FileText className="h-4 w-4" />
                               </Button>
                               <Button
                                 variant="ghost"
@@ -1143,6 +1409,24 @@ export default function QuotationsList() {
                   />
                 </div>
               </div>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Project Details</h3>
+                <div className="space-y-2">
+                  <Label>Project Details (Optional)</Label>
+                  <Textarea
+                    value={editForm.note}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        note: e.target.value,
+                      })
+                    }
+                    rows={3}
+                    placeholder="Enter project details..."
+                  />
+                </div>
+              </div>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setEditDialog(false)}>
@@ -1150,6 +1434,50 @@ export default function QuotationsList() {
               </Button>
               <Button onClick={handleUpdateQuotation} disabled={loading}>
                 {loading ? "Updating..." : "Update Quotation"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={invoiceDialog} onOpenChange={setInvoiceDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Generate Invoice</DialogTitle>
+              <DialogDescription>
+                Convert Quotation #{selectedQuotation?.quote_number} to Invoice.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label>Invoice Number</Label>
+                <Input
+                  value={invoiceData.invoice_number}
+                  onChange={(e) =>
+                    setInvoiceData({
+                      ...invoiceData,
+                      invoice_number: e.target.value,
+                    })
+                  }
+                  placeholder="INV-001"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Invoice Date</Label>
+                <Input
+                  type="date"
+                  value={invoiceData.date}
+                  onChange={(e) =>
+                    setInvoiceData({ ...invoiceData, date: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setInvoiceDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleGenerateInvoice} disabled={loading}>
+                {loading ? "Generating..." : "Generate & Download"}
               </Button>
             </div>
           </DialogContent>

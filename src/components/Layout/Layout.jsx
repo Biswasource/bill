@@ -6,7 +6,7 @@ import { RiCarLine, RiFileListLine } from "react-icons/ri";
 import { BsChatDots } from "react-icons/bs";
 import { IoSettings } from "react-icons/io5";
 import logo from "../../assets/react.svg";
-
+import { useNavigate } from "react-router-dom";
 export default function SidebarLayout() {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -36,38 +36,77 @@ export default function SidebarLayout() {
     setIsMobileOpen(!isMobileOpen);
   };
 
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem("supabase_user");
+    if (userStr) {
+      setUser(JSON.parse(userStr));
+    }
+  }, []);
+
+  const isStaff = user?.user_metadata?.role === "user";
+
+  const navigate = React.useMemo(() => {
+    // This is just to satisfy the rule, but actually we can just use useNavigate()
+    return null;
+  }, []);
+  const realNavigate = useNavigate();
+
+  useEffect(() => {
+    if (isStaff) {
+      const currentPath = window.location.pathname;
+      const allowedPath = "/dashboard/quotation";
+      if (!currentPath.includes(allowedPath)) {
+        realNavigate(allowedPath);
+      }
+    }
+  }, [isStaff, realNavigate]);
+
   const menuItems = [
     {
       path: "/dashboard/dashboard",
       label: "Dashboard",
       icon: <HiOutlineHome />,
+      show: !isStaff,
     },
     {
       path: "/dashboard/services",
       label: "Services",
-      icon: <FaServicestack />, // or any icon you want
+      icon: <FaServicestack />,
+      show: !isStaff,
     },
     {
       path: "/dashboard/clients",
       label: "Clients",
       icon: <HiUser />,
+      show: !isStaff,
     },
     {
       path: "/dashboard/quotation",
       label: "Quotation",
       icon: <RiFileListLine />,
+      show: true,
     },
     {
       path: "/dashboard/quotations",
       label: "All Quotations",
       icon: <RiFileListLine />,
+      show: !isStaff,
+    },
+    {
+      path: "/dashboard/users",
+      label: "Users",
+      icon: <HiUser />,
+      show: !isStaff,
     },
     {
       path: "/dashboard/settings",
       label: "Settings",
       icon: <IoSettings />,
+      show: !isStaff,
     },
-  ];
+  ].filter((item) => item.show);
 
   return (
     <div className="flex h-screen bg-gray-50">
